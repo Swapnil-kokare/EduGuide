@@ -1,0 +1,122 @@
+{
+  "info": {
+    "name": "Career Guide Local API",
+    "_postman_id": "7f5b4f86-5d0a-4e40-9d58-0f9c6e8f3c11",
+    "description": "Local Postman collection for Career Guide Pro.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Colleges",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/colleges",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "colleges"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Predict Colleges",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"score\": {{predictScore}},\n  \"category\": \"{{predictCategory}}\",\n  \"branch\": \"{{predictBranch}}\",\n  \"city\": \"{{predictCity}}\",\n  \"examType\": \"{{predictExamType}}\",\n  \"collegeType\": \"{{predictCollegeType}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/predict",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "predict"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Official Colleges",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/official-colleges?district={{officialDistrict}}&limit={{officialLimit}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "official-colleges"
+          ],
+          "query": [
+            {
+              "key": "district",
+              "value": "{{officialDistrict}}"
+            },
+            {
+              "key": "limit",
+              "value": "{{officialLimit}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Feedback",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"rating\": {{feedbackRating}},\n  \"message\": \"{{feedbackMessage}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/feedback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "feedback"
+          ]
+        }
+      }
+    }
+  ]
+}
