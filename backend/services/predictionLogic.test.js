@@ -35,4 +35,11 @@ describe('predictionLogic', () => {
       'Private'
     );
   });
+
+  it('does not generate NaN metrics when cutoff is missing or invalid', () => {
+    const metrics = calculateMatchMetrics(90, undefined);
+    expect(metrics.scoreGap).toBe(90);
+    expect(metrics.matchPercent).toBe(50);
+    expect(metrics.matchBand).toBe('Safe');
+  });
 });

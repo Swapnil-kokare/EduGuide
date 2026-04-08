@@ -15,9 +15,14 @@
     "test": "npm --prefix backend run test && npm --prefix frontend run test",
     "seed": "npm --prefix backend run seed",
     "import:official-colleges": "npm --prefix backend run import:official-colleges",
-    "import:official-cutoffs": "npm --prefix backend run import:official-cutoffs"
+    "import:official-cutoffs": "npm --prefix backend run import:official-cutoffs",
+    "import:mahacet-jsonl": "npm --prefix backend run import:mahacet-jsonl",
+    "migrate:feedback": "npm --prefix backend run migrate:feedback"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "mongoose": "^9.4.1"
   }
 }

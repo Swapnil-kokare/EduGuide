@@ -1,58 +1,20 @@
-const mongoose = require('../shared/mongoose');
+const mongoose = require('mongoose');
 
-const collegeSchema = new mongoose.Schema({
-  instituteCode: {
-    type: String,
-    trim: true
-  },
-  choiceCode: {
-    type: String,
-    trim: true,
-    index: true
-  },
-  collegeName: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  city: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  branch: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  categoryCutoff: {
-    type: Map,
-    of: {
-      type: Number,
-      min: 0,
-      max: 100
+const collegeSchema = new mongoose.Schema(
+    {
+        college_name: {
+            type: String,
+            required: true,
+        },
+        location: String,
+        handicap_score: Number,
+        general_score: Number,
+        obc_score: Number,
+        sc_score: Number,
+        st_score: Number,
+        ews_score: Number,
     },
-    default: {}
-  },
-  fees: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  type: {
-    type: String,
-    trim: true
-  },
-  sourceRound: {
-    type: String,
-    trim: true
-  },
-  sourceUrl: {
-    type: String,
-    trim: true
-  }
-}, {
-  timestamps: true
-});
+    { timestamps: true }
+);
 
 module.exports = mongoose.model('College', collegeSchema);

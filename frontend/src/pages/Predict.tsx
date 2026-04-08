@@ -109,11 +109,24 @@ const Predict = () => {
         }
       }
 
-      // Remove duplicates and sort by match percentage
+      // Remove duplicates and sort intelligently based on backend logic
+      const getRankBucket = (band?: string) => {
+        if (band === 'Target') return 0;
+        if (band === 'Reach') return 1;
+        if (band === 'Safe') return 2;
+        return 3;
+      };
+
       const uniqueResults = Array.from(
         new Map(allResults.map(item => [`${item.id}-${item.branch}`, item])).values()
       )
-        .sort((a, b) => b.matchPercent - a.matchPercent)
+        .sort((a, b) => {
+          const aBucket = getRankBucket(a.matchBand);
+          const bBucket = getRankBucket(b.matchBand);
+          if (aBucket !== bBucket) return aBucket - bBucket;
+          if (b.cutoff !== a.cutoff) return b.cutoff - a.cutoff;
+          return b.matchPercent - a.matchPercent;
+        })
         .slice(0, MAX_PREDICTION_RESULTS);
 
       setResults(uniqueResults);

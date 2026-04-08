@@ -13,6 +13,19 @@ const CATEGORY_BUCKET_MAP = {
   SC: 'SC',
   ST: 'ST',
 };
+const CATEGORY_CUTOFF_KEY_MAP = {
+  OPEN: 'GOPENS',
+  EWS: 'EWS',
+  OBC: 'GOBCS',
+  DT_VJ: 'GVJS',
+  NT1: 'GNT1S',
+  NT2: 'GNT2S',
+  NT3: 'GNT3S',
+  SBC: 'GSEBCS',
+  SEBC: 'GSEBCS',
+  SC: 'GSCS',
+  ST: 'GSTS',
+};
 const SUPPORTED_CATEGORIES = Object.keys(CATEGORY_BUCKET_MAP);
 
 const GOVERNMENT_NAME_PATTERNS = [
@@ -44,6 +57,10 @@ function normalizeCategory(category) {
 function resolvePredictionCategory(category) {
   const normalizedCategory = normalizeCategory(category);
   return CATEGORY_BUCKET_MAP[normalizedCategory] || null;
+}
+
+function getCutoffCategoryKey(resolvedCategory) {
+  return CATEGORY_CUTOFF_KEY_MAP[resolvedCategory] || null;
 }
 
 function normalizeExamType(examType) {
@@ -85,14 +102,40 @@ function inferCollegeType(college) {
 }
 
 function calculateMatchMetrics(effectivePercentile, cutoff) {
-  const scoreGap = Number((effectivePercentile - cutoff).toFixed(2));
-  const matchPercent = Math.max(35, Math.min(98, Math.round(98 - scoreGap * 3)));
+  let numericCutoff = Number(cutoff);
+  if (Number.isNaN(numericCutoff)) {
+    numericCutoff = 0;
+  }
 
-  const matchBand = scoreGap <= 3 ? 'Target' : 'Safe';
-  const rankBucket = scoreGap <= 3 ? 0 : 1;
+  const scoreGap = Number((effectivePercentile - numericCutoff).toFixed(2));
+  
+  let matchBand;
+  let rankBucket;
+  let matchPercent;
+
+  if (scoreGap < -2) {
+    matchBand = 'Out of Reach';
+    rankBucket = 3;
+    matchPercent = Math.max(10, Math.round(80 - Math.abs(scoreGap) * 10));
+  } else if (scoreGap < 0) {
+    matchBand = 'Reach';
+    rankBucket = 1;
+    // For close reach (-2 to 0), realistically drops chance.
+    matchPercent = Math.max(40, Math.round(95 - Math.abs(scoreGap) * 20));
+  } else if (scoreGap <= 3) {
+    matchBand = 'Target';
+    rankBucket = 0;
+    // Ideal target
+    matchPercent = Math.round(99 - scoreGap * 4.6);
+  } else {
+    matchBand = 'Safe';
+    rankBucket = 2;
+    // Overqualified / safe
+    matchPercent = Math.max(50, Math.round(85 - (scoreGap - 3) * 3));
+  }
 
   return {
-    cutoffUsed: cutoff,
+    cutoffUsed: numericCutoff,
     scoreGap,
     matchPercent,
     matchBand,
@@ -129,5 +172,6 @@ module.exports = {
   normalizeCollegeType,
   normalizeExamType,
   resolvePredictionCategory,
+  getCutoffCategoryKey,
   toEffectivePercentile,
 };

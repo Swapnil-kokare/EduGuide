@@ -9,12 +9,15 @@
         "seed": "node ../database/scripts/seed.js",
         "import:official-colleges": "node ../database/scripts/importOfficialColleges.js",
         "import:official-cutoffs": "node ../database/scripts/importOfficialCutoffs.js",
+        "import:mahacet-jsonl": "node ../database/scripts/importMahacetJsonl.js",
+        "migrate:feedback": "node ../database/scripts/migrateFeedbackToConfiguredMongo.js",
         "test": "vitest run --config vitest.config.js"
     },
     "dependencies": {
         "cors": "^2.8.6",
         "dotenv": "^16.6.1",
         "express": "^4.22.1",
+        "express-rate-limit": "^7.4.1",
         "express-validator": "^7.0.1",
         "mongoose": "^7.8.9",
         "pdf-parse": "^2.4.5"

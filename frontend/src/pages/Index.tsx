@@ -6,7 +6,7 @@ import {
   GraduationCap, Target, BarChart3, ArrowRight, Sparkles,
   CheckCircle2, TrendingUp, Clock, Quote, ChevronRight,
   BookOpen, Award, MapPin, Lightbulb, Brain, MessageSquareHeart,
-  Code, Cpu, Zap, Wrench, Building2, Radio
+  Code, Cpu, Zap, Wrench, Building2, Radio, ExternalLink, FileCheck2, FileText, ListChecks, MousePointerClick
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -34,10 +34,51 @@ const features = [
   },
 ];
 
-const steps = [
-  { num: "01", title: "Enter Your Details", desc: "Add your name, category, exam type, and percentile.", icon: BookOpen },
-  { num: "02", title: "Set Preferences", desc: "Choose preferred branches, locations, and college type.", icon: Target },
-  { num: "03", title: "Get Recommendations", desc: "Receive a ranked list of colleges matched to your profile.", icon: Award },
+const capProcessStages = [
+  {
+    num: "01",
+    title: "Read the brochure and register",
+    desc: "CET Cell first releases the official brochure. Then candidates complete the online CAP registration form and upload the required documents.",
+    icon: FileText,
+    cue: "Brochure + CAP registration",
+  },
+  {
+    num: "02",
+    title: "Verify documents and check merit",
+    desc: "After verification through ARC or the prescribed scrutiny mode, CET Cell publishes the provisional merit list, grievance window, and final merit list.",
+    icon: FileCheck2,
+    cue: "Verification + merit list",
+  },
+  {
+    num: "03",
+    title: "Fill the option form carefully",
+    desc: "Before each CAP round, the seat matrix is published. Candidates then submit the online option form in descending order of preference.",
+    icon: ListChecks,
+    cue: "Seat matrix + choices",
+  },
+  {
+    num: "04",
+    title: "Accept allotment and report",
+    desc: "Once allotment is declared, candidates accept the seat, complete seat-confirmation steps, pay the fee if required, and report to the allotted institute.",
+    icon: MousePointerClick,
+    cue: "Allotment + reporting",
+  },
+];
+
+const capRoundRules = [
+  "Round I first-preference allotments are auto-freezed and become final after acceptance.",
+  "Candidates accepting a lower preference may remain eligible for betterment in later rounds, subject to CET Cell round rules.",
+];
+
+const officialCapLinks = [
+  {
+    label: "Admission Portal",
+    href: "https://cetcell.mahacet.org/cap-_2025-26/",
+  },
+  {
+    label: "UG/PG Brochure 2025-26",
+    href: "https://cetcell.mahacet.org/wp-content/uploads/2023/12/Information_Brochure_UG_PG_2025_26_Final_02_07_2025.pdf",
+  },
 ];
 
 const branches = [
@@ -167,7 +208,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* How CAP Process Works */}
       <section id="how-it-works" className="py-20 bg-card/50">
         <div className="container">
           <motion.div
@@ -177,15 +218,33 @@ const Index = () => {
             className="text-center mb-14"
           >
             <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-4">
-              <Clock className="h-3 w-3" /> 3 Simple Steps
+              <Clock className="h-3 w-3" /> Official CET Cell Flow
             </motion.div>
             <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-foreground">
-              How It Works
+              How CAP Process Works
             </motion.h2>
+            <motion.p variants={fadeUp} custom={2} className="mt-4 text-muted-foreground text-lg max-w-3xl mx-auto">
+              This follows the official State CET Cell admission sequence for A.Y. 2025-26. Scroll through the stages to understand what happens before and during CAP rounds.
+            </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {steps.map((s, i) => (
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            {officialCapLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <ExternalLink className="h-4 w-4 text-primary" />
+                {link.label}
+              </a>
+            ))}
+          </div>
+
+          <div className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory">
+            {capProcessStages.map((s, i) => (
               <motion.div
                 key={s.num}
                 initial="hidden"
@@ -193,18 +252,35 @@ const Index = () => {
                 viewport={{ once: true }}
                 custom={i}
                 variants={fadeUp}
-                className="relative text-center"
+                className="min-w-[280px] max-w-[320px] flex-1 snap-start"
               >
-                <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-5 shadow-lg shadow-primary/20">
-                  <s.icon className="h-7 w-7 text-primary-foreground" />
-                </div>
-                <span className="text-xs font-mono text-primary font-bold tracking-widest">STEP {s.num}</span>
-                <h3 className="font-display text-lg font-semibold text-foreground mt-2 mb-2">{s.title}</h3>
-                <p className="text-sm text-muted-foreground">{s.desc}</p>
-                {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] border-t-2 border-dashed border-border" />
-                )}
+                <Card className="h-full glass border-primary/10">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between gap-4 mb-5">
+                      <div>
+                        <p className="text-xs font-mono text-primary font-bold tracking-widest">STAGE {s.num}</p>
+                        <p className="mt-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">{s.cue}</p>
+                      </div>
+                      <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <s.icon className="h-5 w-5 text-primary" />
+                      </div>
+                    </div>
+                    <h3 className="font-display text-lg font-semibold text-foreground mb-3">{s.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                  </CardContent>
+                </Card>
               </motion.div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto mt-8">
+            {capRoundRules.map((rule) => (
+              <Card key={rule} className="glass">
+                <CardContent className="p-5 flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground leading-relaxed">{rule}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>

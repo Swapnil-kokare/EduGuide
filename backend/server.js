@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const connectDB = require('../database/config/database');
+const rateLimit = require('express-rate-limit');
+const { connectDB } = require('../database/config/database');
 const apiRoutes = require('./routes');
 
 // Load environment variables
@@ -13,16 +14,40 @@ connectDB();
 
 const app = express();
 
+// Security: Rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: {
+        success: false,
+        message: 'Too many requests from this IP, please try again later.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Security: CORS configuration
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || process.env.NODE_ENV === 'production'
+        ? false // Let browser handle CORS in production
+        : ['http://localhost:8080', 'http://localhost:3000'], // Development origins
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(limiter);
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
 app.get('/api', (req, res) => {
     return res.status(200).json({
         success: true,
-        message: 'Career Guidance API is running'
+        message: 'Career Guidance API is running',
+        environment: process.env.NODE_ENV || 'development',
+        timestamp: new Date().toISOString()
     });
 });
 
