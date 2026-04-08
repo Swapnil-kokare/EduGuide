@@ -13,23 +13,55 @@ career-guide-pro-main/
 └── package.json
 ```
 
-## Common Commands
+## Getting Started
 
-Run these from the repository root:
+### 1. Prerequisites
+- Node.js (v16 or higher)
+- MongoDB (Local or Atlas)
 
+### 2. Installation
+Run the following command in the root directory to install dependencies for both frontend and backend:
 ```bash
 npm install
-npm run dev:all
-npm run dev:frontend
-npm run dev:backend
-npm run build
-npm run test
-npm run seed
 ```
 
-## Notes
+### 3. Environment Configuration
+The backend requires a `.env` file to connect to the database.
+1. Navigate to the `backend` folder:
+   ```bash
+   cd backend
+   ```
+2. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+3. Open the new `.env` file and replace the `MONGO_URI` placeholder with your actual MongoDB connection string.
 
-- `npm install` at the repo root now installs dependencies for both `frontend` and `backend`.
-- Backend environment variables stay in `backend/.env`.
-- Official CET Cell snapshots live in `database/data`.
-- Postman assets live in `docs/postman`.
+### 4. Running the Application
+Return to the root directory and run:
+```bash
+npm run dev
+```
+This will start both the frontend and backend servers concurrently.
+
+## Project Layout
+
+```text
+career-guide-pro-main/
+├── frontend/   # Vite + React client
+├── backend/    # Express API
+├── database/   # MongoDB models and seed scripts
+├── docs/       # Documentation and API testing
+└── package.json
+```
+
+## Common Commands
+
+| Command | Description |
+| --- | --- |
+| `npm install` | Install all dependencies |
+| `npm run dev` | Run full application (Frontend + Backend) |
+| `npm run dev:frontend` | Run only the frontend |
+| `npm run dev:backend` | Run only the backend |
+| `npm run seed` | Import initial college data to MongoDB |
+| `npm test` | Run backend tests |
