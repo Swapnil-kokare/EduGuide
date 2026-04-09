@@ -29,11 +29,13 @@ class PredictionService {
             const escapeRegex = (value) => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const branchRegex = new RegExp(escapeRegex(branch.trim()), 'i');
 
-            // Search the ENTIRE database (all 368+ colleges)
-            // Only filter by branch name in MongoDB for performance
+            // Search the ENTIRE cutoff database (1500+ records)
+            // MongoDB filters by branch name for performance
             const rawResults = await MahacetCutoff.find({
                 'branches.course_name': branchRegex,
             }).lean();
+
+            console.log(`DB returned ${rawResults.length} colleges for branch "${branch}"`);
 
             const predictedColleges = [];
 
@@ -47,6 +49,7 @@ class PredictionService {
                         continue;
                     }
 
+                    // Try to find the best cutoff entry (State Level, Stage I preferred)
                     const cutoffData = Array.isArray(branchItem.cutoffs)
                         ? branchItem.cutoffs.find((entry) =>
                             String(entry.section || '').toLowerCase().includes('state') &&
@@ -63,7 +66,7 @@ class PredictionService {
                     }
 
                     // Only include colleges where student percentile >= cutoff
-                    // (no "Reach" or "Out of Reach" — only achievable colleges)
+                    // (only achievable colleges — no "Reach")
                     if (effectivePercentile < cutoff) {
                         continue;
                     }
@@ -72,7 +75,7 @@ class PredictionService {
 
                     const collegeName = college.college_name || college.collegeName || '';
                     const inferredType = inferCollegeType({ collegeName, branch: branchItem.course_name });
-                    // Always derive location from database college name, not from user input
+                    // Always derive location from database college name
                     const collegeCity = (collegeName.split(',').pop() || '').trim() || 'Maharashtra';
 
                     const result = {
@@ -98,9 +101,12 @@ class PredictionService {
                 }
             }
 
-            // Return ALL matching colleges sorted by best match (no hard limit)
-            return predictedColleges.sort(comparePredictions);
+            console.log(`Found ${predictedColleges.length} achievable colleges, returning best 20`);
+
+            // Sort by best match and return the top 20 best options
+            return predictedColleges.sort(comparePredictions).slice(0, 20);
         } catch (error) {
+            console.error('PredictionService error:', error.message);
             throw new Error('Error predicting colleges: ' + error.message);
         }
     }

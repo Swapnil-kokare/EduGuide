@@ -29,7 +29,7 @@ const STEPS = [
   { label: "Your Score", icon: BookOpen, desc: "Exam performance" },
   { label: "Preferences", icon: Settings2, desc: "Branch & location" },
 ];
-const MAX_PREDICTION_RESULTS = 50;
+const MAX_PREDICTION_RESULTS = 20;
 
 const Predict = () => {
   const [step, setStep] = useState(0);

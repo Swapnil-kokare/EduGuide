@@ -14,6 +14,8 @@ const predictColleges = async (req, res) => {
 
         const { score, category, branch, city, examType, collegeType } = req.body;
 
+        console.log('Prediction request:', { score, category, branch, city, examType, collegeType });
+
         const colleges = await PredictionService.predictColleges(
             score,
             category,
@@ -23,16 +25,18 @@ const predictColleges = async (req, res) => {
             collegeType
         );
 
+        console.log(`Prediction returned ${colleges.length} results`);
+
         res.status(200).json({
             success: true,
             data: colleges,
             count: colleges.length
         });
     } catch (error) {
-        console.error('Prediction error:', error);
+        console.error('Prediction error:', error.message, error.stack);
         res.status(500).json({
             success: false,
-            message: 'Internal server error'
+            message: error.message || 'Internal server error'
         });
     }
 };
