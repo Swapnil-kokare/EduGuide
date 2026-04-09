@@ -29,7 +29,7 @@ const STEPS = [
   { label: "Your Score", icon: BookOpen, desc: "Exam performance" },
   { label: "Preferences", icon: Settings2, desc: "Branch & location" },
 ];
-const MAX_PREDICTION_RESULTS = 20;
+const MAX_PREDICTION_RESULTS = 50;
 
 const Predict = () => {
   const [step, setStep] = useState(0);
@@ -109,12 +109,11 @@ const Predict = () => {
         }
       }
 
-      // Remove duplicates and sort intelligently based on backend logic
+      // Sort: Target colleges first, then Safe
       const getRankBucket = (band?: string) => {
         if (band === 'Target') return 0;
-        if (band === 'Reach') return 1;
-        if (band === 'Safe') return 2;
-        return 3;
+        if (band === 'Safe') return 1;
+        return 2;
       };
 
       const uniqueResults = Array.from(

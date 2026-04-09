@@ -28,6 +28,9 @@ class PredictionService {
 
             const escapeRegex = (value) => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const branchRegex = new RegExp(escapeRegex(branch.trim()), 'i');
+
+            // Search the ENTIRE database (all 368+ colleges)
+            // Only filter by branch name in MongoDB for performance
             const rawResults = await MahacetCutoff.find({
                 'branches.course_name': branchRegex,
             }).lean();
@@ -53,6 +56,18 @@ class PredictionService {
 
                     const categoryInfo = cutoffData?.categories?.[cutoffCategoryKey];
                     const cutoff = categoryInfo?.percentile ?? 0;
+
+                    // Skip colleges with no cutoff data for this category
+                    if (cutoff === 0) {
+                        continue;
+                    }
+
+                    // Only include colleges where student percentile >= cutoff
+                    // (no "Reach" or "Out of Reach" — only achievable colleges)
+                    if (effectivePercentile < cutoff) {
+                        continue;
+                    }
+
                     const metrics = calculateMatchMetrics(effectivePercentile, cutoff);
 
                     const collegeName = college.college_name || college.collegeName || '';
@@ -83,7 +98,8 @@ class PredictionService {
                 }
             }
 
-            return predictedColleges.sort(comparePredictions).slice(0, 20);
+            // Return ALL matching colleges sorted by best match (no hard limit)
+            return predictedColleges.sort(comparePredictions);
         } catch (error) {
             throw new Error('Error predicting colleges: ' + error.message);
         }

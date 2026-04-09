@@ -113,24 +113,16 @@ function calculateMatchMetrics(effectivePercentile, cutoff) {
   let rankBucket;
   let matchPercent;
 
-  if (scoreGap < -2) {
-    matchBand = 'Out of Reach';
-    rankBucket = 3;
-    matchPercent = Math.max(10, Math.round(80 - Math.abs(scoreGap) * 10));
-  } else if (scoreGap < 0) {
-    matchBand = 'Reach';
-    rankBucket = 1;
-    // For close reach (-2 to 0), realistically drops chance.
-    matchPercent = Math.max(40, Math.round(95 - Math.abs(scoreGap) * 20));
-  } else if (scoreGap <= 3) {
+  // Since we only show colleges where percentile >= cutoff, scoreGap is always >= 0
+  if (scoreGap <= 3) {
     matchBand = 'Target';
     rankBucket = 0;
-    // Ideal target
+    // Ideal target — closest match to cutoff
     matchPercent = Math.round(99 - scoreGap * 4.6);
   } else {
     matchBand = 'Safe';
-    rankBucket = 2;
-    // Overqualified / safe
+    rankBucket = 1;
+    // Comfortably above cutoff
     matchPercent = Math.max(50, Math.round(85 - (scoreGap - 3) * 3));
   }
 

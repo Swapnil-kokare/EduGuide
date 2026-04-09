@@ -243,23 +243,22 @@ export function predictColleges(profile: StudentProfile): CollegeResult[] {
       if (collegeType && collegeType !== "Any" && c.type !== collegeType) return false;
       if (preferredBranches.length > 0 && !preferredBranches.some((b) => c.branch.toLowerCase().includes(b.toLowerCase()))) return false;
       if (preferredLocation && preferredLocation !== "Any" && !c.location.toLowerCase().includes(preferredLocation.toLowerCase())) return false;
+
+      // Only include colleges where student percentile >= adjusted cutoff
+      const adjustedCutoff = Math.max(0, c.cutoff - catAdj);
+      if (adjustedCutoff === 0) return false;
+      if (effectivePercentile < adjustedCutoff) return false;
+
       return true;
     })
     .map((c) => {
       const adjustedCutoff = Math.max(0, c.cutoff - catAdj);
       const diff = effectivePercentile - adjustedCutoff;
-      let matchPercent: number;
-      if (diff >= 0) {
-        matchPercent = Math.min(98, 75 + diff * 2);
-      } else if (diff >= -5) {
-        matchPercent = 50 + diff * 5;
-      } else {
-        matchPercent = Math.max(10, 25 + diff * 2);
-      }
+      // diff is always >= 0 since we filtered above
+      const matchPercent = Math.min(98, 75 + diff * 2);
       return { ...c, matchPercent: Math.round(matchPercent) };
     })
-    .sort((a, b) => b.matchPercent - a.matchPercent)
-    .slice(0, 15);
+    .sort((a, b) => b.matchPercent - a.matchPercent);
 }
 
 export const branches = [
