@@ -28,9 +28,7 @@ const limiter = rateLimit({
 
 // Security: CORS configuration
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || process.env.NODE_ENV === 'production'
-        ? false // Let browser handle CORS in production
-        : ['http://localhost:8080', 'http://localhost:3000'], // Development origins
+    origin: process.env.NODE_ENV === 'production' ? true : ['http://localhost:8080', 'http://localhost:3000'],
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -70,17 +68,19 @@ app.use('*', (req, res) => {
     });
 });
 
-const PORT = process.env.PORT || 5000;
+module.exports = app;
 
-const server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
-
-server.on('error', (error) => {
-    if (error.code === 'EADDRINUSE') {
-        console.error(`Port ${PORT} is already in use. Stop the existing server or change PORT in backend/.env.`);
-        process.exit(1);
-    }
-
-    throw error;
-});
+if (require.main === module || process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    const server = app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+    
+    server.on('error', (error) => {
+        if (error.code === 'EADDRINUSE') {
+            console.error(`Port ${PORT} is already in use. Stop the existing server or change PORT in backend/.env.`);
+            process.exit(1);
+        }
+        throw error;
+    });
+}
