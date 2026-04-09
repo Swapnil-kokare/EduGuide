@@ -10,7 +10,7 @@ const apiRoutes = require('./routes');
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Connect to database
-connectDB();
+connectDB().catch(err => console.error("Failed to connect to MongoDB initially:", err));
 
 const app = express();
 
