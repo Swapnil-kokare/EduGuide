@@ -57,9 +57,8 @@ class PredictionService {
 
                     const collegeName = college.college_name || college.collegeName || '';
                     const inferredType = inferCollegeType({ collegeName, branch: branchItem.course_name });
-                    const collegeCity = city && city !== 'Any' && city !== 'all'
-                        ? city
-                        : (collegeName.split(',').pop() || '').trim();
+                    // Always derive location from database college name, not from user input
+                    const collegeCity = (collegeName.split(',').pop() || '').trim() || 'Maharashtra';
 
                     const result = {
                         _id: `${college._id}-${branchItem.course_code || branchItem.course_name}`,
