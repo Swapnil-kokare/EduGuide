@@ -80,27 +80,3 @@ export const submitFeedback = async (request: FeedbackRequest): Promise<Feedback
     }
 };
 
-/**
- * Get all colleges
- */
-export const getAllColleges = async (): Promise<PredictionResponse> => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/colleges`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || "Failed to fetch colleges");
-        }
-
-        return data;
-    } catch (error) {
-        console.error("Fetch colleges error:", error);
-        throw error;
-    }
-};
