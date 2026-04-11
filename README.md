@@ -44,17 +44,6 @@ npm run dev
 ```
 This will start both the frontend and backend servers concurrently.
 
-## Project Layout
-
-```text
-career-guide-pro-main/
-├── frontend/   # Vite + React client
-├── backend/    # Express API
-├── database/   # MongoDB models and seed scripts
-├── docs/       # Documentation and API testing
-└── package.json
-```
-
 ## Common Commands
 
 | Command | Description |
