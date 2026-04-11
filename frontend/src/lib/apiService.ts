@@ -1,12 +1,12 @@
 const API_BASE_URL = "/api";
 
 export interface PredictionRequest {
-    score: number;
+    percentile: number;
     category: string;
-    branch: string;
-    city: string;
+    branches: string[];
+    cities: string[];
+    collegeTypes: string[];
     examType?: "MHT-CET" | "JEE";
-    collegeType?: "Any" | "Government" | "Private";
 }
 
 export interface PredictionResponse {
@@ -80,3 +80,53 @@ export const submitFeedback = async (request: FeedbackRequest): Promise<Feedback
     }
 };
 
+/**
+ * Fetch available categories from backend
+ */
+export const fetchCategories = async (): Promise<{ label: string; apiValue: string }[]> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/meta/categories`);
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "Failed to fetch categories");
+        }
+        return data.data;
+    } catch (error) {
+        console.error("Fetch categories error:", error);
+        return [];
+    }
+};
+
+/**
+ * Fetch available branches from backend (distinct from cutoff collection)
+ */
+export const fetchBranches = async (): Promise<string[]> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/meta/branches`);
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "Failed to fetch branches");
+        }
+        return data.data;
+    } catch (error) {
+        console.error("Fetch branches error:", error);
+        return [];
+    }
+};
+
+/**
+ * Fetch available cities from backend (distinct from cutoff collection)
+ */
+export const fetchCities = async (): Promise<string[]> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/meta/cities`);
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "Failed to fetch cities");
+        }
+        return data.data;
+    } catch (error) {
+        console.error("Fetch cities error:", error);
+        return [];
+    }
+};
