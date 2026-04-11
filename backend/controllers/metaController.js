@@ -1,5 +1,7 @@
 const MahacetCutoff = require('../../database/models/MahacetCutoff');
-const { SUPPORTED_CATEGORIES, CATEGORY_BUCKET_MAP } = require('../services/predictionLogic');
+const SUPPORTED_CATEGORIES = [
+    'OPEN', 'EWS', 'OBC', 'DT_VJ', 'NT1', 'NT2', 'NT3', 'SBC', 'SEBC', 'SC', 'ST'
+];
 
 /**
  * GET /api/meta/categories
