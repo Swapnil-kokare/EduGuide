@@ -75,8 +75,9 @@ class PredictionService {
 
                     const collegeName = college.college_name || college.collegeName || '';
                     const inferredType = inferCollegeType({ collegeName, branch: branchItem.course_name });
-                    // Always derive location from database college name
-                    const collegeCity = (collegeName.split(',').pop() || '').trim() || 'Maharashtra';
+                    // Derive location from new database fields, fallback to college name splitting
+                    const stringFallbackCity = (collegeName.split(',').pop() || '').trim() || 'Maharashtra';
+                    const collegeCity = college.location || college.district || college.city || stringFallbackCity;
 
                     const result = {
                         _id: `${college._id}-${branchItem.course_code || branchItem.course_name}`,
