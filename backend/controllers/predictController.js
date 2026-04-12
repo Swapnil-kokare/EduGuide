@@ -32,10 +32,12 @@ const predictColleges = async (req, res) => {
             count: colleges.length
         });
     } catch (error) {
-        console.error('Prediction error:', error.message, error.stack);
+        console.error('Prediction error:', error.message);
+        console.error('Stack:', error.stack);
         res.status(500).json({
             success: false,
-            message: error.message || 'Internal server error'
+            message: error.message || 'Internal server error',
+            error: process.env.NODE_ENV !== 'production' ? error.stack : undefined
         });
     }
 };

@@ -52,13 +52,19 @@ class PredictionService {
             const fallbackStr = collegeName.split(',').pop()?.trim() || 'Maharashtra';
             const collegeCity = String(parsedLoc || college.district || college.city || fallbackStr);
 
-            // Extract Type
-            let collegeTypeObj = college.type || "Government";
-            if (typeof collegeTypeObj === 'object') {
-                collegeTypeObj = collegeTypeObj.status || "Government";
+            // Extract Type — check multiple possible field names
+            let collegeTypeObj = college.type || college.college_type || college.status || null;
+            if (collegeTypeObj !== null && typeof collegeTypeObj === 'object') {
+                collegeTypeObj = collegeTypeObj.status || collegeTypeObj.type || null;
             }
-            if (!college.type && collegeName.toLowerCase().includes('private')) {
-                collegeTypeObj = 'Private';
+            // Infer from college name if still unknown
+            if (!collegeTypeObj) {
+                const nameLower = collegeName.toLowerCase();
+                if (nameLower.includes('government') || nameLower.includes('govt')) {
+                    collegeTypeObj = 'Government';
+                } else {
+                    collegeTypeObj = 'Private';
+                }
             }
 
             // --- STEP 2: CITY FILTER (CONDITIONAL) ---
@@ -115,9 +121,15 @@ class PredictionService {
                 if (actualCutoff === null || actualCutoff === 0) continue; // Skip if cutoff is missing
 
                 // --- STEP 7: SAFE CHECK (CORE RULE) ---
-                // Use a small buffer for real-world accuracy (percentile >= cutoff - 0.5)
-                if (percentile >= (actualCutoff - 0.5)) {
-                    // Include this college
+                // STRICT: Only include colleges where user's percentile >= cutoff
+                // No buffer — student must meet or exceed the cutoff to be safe
+                if (percentile >= actualCutoff) {
+                    // Calculate match quality: how far above the cutoff the student is
+                    const gap = percentile - actualCutoff;
+                    // Closer to cutoff = higher match (tighter fit is better)
+                    // gap 0 = 100% match, gap 6+ = 75% match
+                    const matchPercent = Math.max(75, Math.round(100 - (gap * (25 / 6))));
+
                     results.push({
                         id: college._id ? String(college._id) : Math.random().toString(),
                         collegeName: collegeName,
@@ -125,9 +137,9 @@ class PredictionService {
                         branch: courseName,
                         cutoff: actualCutoff,
                         collegeType: String(collegeTypeObj),
-                        // Preserving original properties in case frontend uses them unexpectedly
+                        matchPercent: matchPercent,
                         _id: college._id ? String(college._id) : Math.random().toString(),
-                        rating: college.rating || 4.0,
+                        rating: college.rating || null,
                         fees: college.fees || null,
                     });
                 }

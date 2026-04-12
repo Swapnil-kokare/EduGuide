@@ -347,7 +347,7 @@ const Index = () => {
             </motion.h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory">
             {testimonials.map((t, i) => (
               <motion.div
                 key={t.name}
@@ -356,6 +356,7 @@ const Index = () => {
                 viewport={{ once: true }}
                 custom={i}
                 variants={fadeUp}
+                className="min-w-[300px] max-w-[380px] flex-1 snap-start"
               >
                 <Card className="h-full glass card-hover">
                   <CardContent className="p-6">

@@ -83,7 +83,7 @@ export function exportResultsPdf({ name, examType, percentile, category, results
       r.location,
       r.type,
       `${r.cutoff}%ile`,
-      `${r.rating}/5`,
+      r.rating ? `${r.rating}/5` : "N/A",
       `${r.matchPercent}%`,
     ]),
     styles: { fontSize: 8, cellPadding: 3 },

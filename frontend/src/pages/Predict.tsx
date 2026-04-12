@@ -229,18 +229,27 @@ const Predict = () => {
         throw new Error("Failed to predict colleges from server");
       }
 
-      const finalResults = (response.data || []).map((college: any, index: number) => ({
-        id: college._id || String(index),
-        name: college.collegeName,
-        location: college.city,
-        branch: college.branch,
-        cutoff: college.cutoff,
-        type: college.collegeType || "Government",
-        rating: college.rating || 4.0,
-        matchPercent: 100, // Safe match placeholder for UI
-        matchBand: "Safe", // Safe match
-        fees: college.fees || null,
-      }));
+      const finalResults = (response.data || []).map((college: any, index: number) => {
+        const mp = college.matchPercent ?? 100;
+        // Determine match band from actual percentage
+        let band = "Safe";
+        if (mp >= 95) band = "Excellent";
+        else if (mp >= 85) band = "Strong";
+        else band = "Good";
+
+        return {
+          id: college._id || String(index),
+          name: college.collegeName,
+          location: college.city,
+          branch: college.branch,
+          cutoff: college.cutoff,
+          type: college.collegeType || "Private",
+          rating: college.rating || null,
+          matchPercent: mp,
+          matchBand: band,
+          fees: college.fees || null,
+        };
+      });
 
       const uniqueResults = finalResults.slice(0, MAX_PREDICTION_RESULTS);
 
@@ -481,7 +490,7 @@ const Predict = () => {
                 <div className="flex flex-wrap gap-3">
                   <Badge variant="secondary" className="gap-1 rounded-lg px-3 py-1"><MapPin className="h-3 w-3" />{topMatch.location}</Badge>
                   <Badge variant="secondary" className="gap-1 rounded-lg px-3 py-1"><GraduationCap className="h-3 w-3" />{topMatch.type}</Badge>
-                  <Badge variant="secondary" className="gap-1 rounded-lg px-3 py-1"><Star className="h-3 w-3" />{topMatch.rating}/5</Badge>
+                  {topMatch.rating ? <Badge variant="secondary" className="gap-1 rounded-lg px-3 py-1"><Star className="h-3 w-3" />{topMatch.rating}/5</Badge> : null}
                   <Badge variant="secondary" className="gap-1 rounded-lg px-3 py-1">Cutoff: {topMatch.cutoff}%ile</Badge>
                   {topMatch.matchBand ? <Badge variant="secondary" className="rounded-lg px-3 py-1">{topMatch.matchBand}</Badge> : null}
                   <Badge className="gap-1 bg-success text-success-foreground rounded-lg px-3 py-1"><TrendingUp className="h-3 w-3" />{topMatch.matchPercent}% Match</Badge>
@@ -517,7 +526,7 @@ const Predict = () => {
                       <div className="flex flex-wrap gap-3 mt-3">
                         <span className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{college.location}</span>
                         <span className="text-xs text-muted-foreground flex items-center gap-1"><GraduationCap className="h-3 w-3" />{college.type}</span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1"><Star className="h-3 w-3" />{college.rating}/5</span>
+                        {college.rating ? <span className="text-xs text-muted-foreground flex items-center gap-1"><Star className="h-3 w-3" />{college.rating}/5</span> : null}
                         <span className="text-xs text-muted-foreground">Cutoff: {college.cutoff}%ile</span>
                         {college.matchBand ? <span className="text-xs text-muted-foreground">{college.matchBand}</span> : null}
                       </div>
