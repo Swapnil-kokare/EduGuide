@@ -2,6 +2,21 @@
 
 EduGuide is a high-performance, rule-based college prediction system specifically designed for MHT-CET and JEE candidates in Maharashtra. It provides accurate college recommendations based on official CAP cutoff logic, including complex reservation systems and location-based preferences.
 
+## 📖 Project Overview
+
+### What is EduGuide?
+EduGuide is a digital assistant designed to help engineering aspirants in Maharashtra navigate the complex college admission process. It simplifies the task of finding the right college by matching a student's exam percentile with historical cutoff data from hundreds of institutions.
+
+### The Problem It Solves
+The Maharashtra CAP (Centralized Admission Process) involves over 300+ colleges, dozens of engineering branches, and a multi-layered reservation system (Caste, PWD, Defense, TFWS, Orphan, etc.). For a student, manually checking PDF cutoff lists to find where they are eligible is overwhelming, time-consuming, and prone to error.
+
+### Our Solution
+EduGuide provides a **strict, rule-based prediction engine** that:
+- **Reduces Search Time**: Instead of scanning hundreds of pages, students get a curated list in seconds.
+- **Ensures Accuracy**: By using exact database comparisons (`Percentile >= Cutoff`), it eliminates guesswork.
+- **Handles Complex Quotas**: Automatically calculates eligibility for special reservations like PWD, Defense, and TFWS, which are often missed by simpler predictors.
+- **Provides Actionable Reports**: Detailed college cards and downloadable PDF reports help students build their final "Option Form" with confidence.
+
 ## 🚀 Key Features
 
 - **Strict Merit-Based Filtering**: Uses official CAP cutoff data with high-precision percentile matching.
