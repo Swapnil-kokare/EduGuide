@@ -4,10 +4,14 @@ export interface PredictionRequest {
     percentile: number;
     category: string;
     branches: string[];
-    cities: string[];
+    districts: string[];
     collegeTypes: string[];
     examType?: "MHT-CET" | "JEE";
     gender?: string;
+    isPwd?: boolean;
+    isDefense?: boolean;
+    isTfws?: boolean;
+    isOrphan?: boolean;
 }
 
 export interface PredictionResponse {

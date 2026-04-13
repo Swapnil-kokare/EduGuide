@@ -12,17 +12,21 @@ const predictColleges = async (req, res) => {
             });
         }
 
-        const { percentile, category, branches, cities, collegeTypes, gender } = req.body;
+        const { percentile, category, branches, districts, collegeTypes, gender, isPwd, isDefense, isTfws, isOrphan, examType } = req.body;
 
-        console.log('Prediction request:', { percentile, category, branches, cities, collegeTypes, gender });
+        console.log('Prediction request:', { percentile, category, branches, districts, collegeTypes, gender, isPwd, isDefense, isTfws, isOrphan, examType });
 
         const colleges = await PredictionService.predictColleges(
             percentile,
             category,
             branches,
-            cities,
+            districts,
             collegeTypes,
             gender,
+            isPwd,
+            isDefense,
+            isTfws,
+            isOrphan,
             examType
         );
 

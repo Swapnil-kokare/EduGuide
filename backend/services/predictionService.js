@@ -5,9 +5,58 @@ class PredictionService {
      * Map frontend category string to corresponding DB keys.
      * Maps based on strict prompt rules + practical defaults.
      */
-    static getCategoryKeys(category) {
+    static getCategoryKeys(category, isPwd = false, isDefense = false, isTfws = false, isOrphan = false) {
         if (!category) return ['GOPENS'];
-        
+
+        const lookup = String(category).toUpperCase().trim();
+        const keys = [];
+
+        // If user explicitly chose TFWS or ORPHAN as their category
+        if (lookup === 'TFWS') return ['TFWS'];
+        if (lookup === 'ORPHAN') return ['ORPHAN'];
+
+        // If PWD is true, map to PWD versions
+        if (isPwd) {
+            const pwdMap = {
+                'OPEN': ['PWDOPENS', 'PWDOPENH'],
+                'OBC': ['PWDOBCS', 'PWDOBCH', 'PWDROBC'],
+                'SC': ['PWDRSCS'],
+                'ST': ['PWDSTS'],
+                'NT1': ['PWDRNT1S'],
+                'NT2': ['PWDRNT2S'],
+                'NT3': ['PWDRNT3S'],
+                'DT_VJ': ['PWDRVJS'],
+                'SBC': ['PWDRSBCS'],
+                'EWS': ['PWDEWS']
+            };
+            keys.push(...(pwdMap[lookup] || [`PWD${lookup}S`]));
+        }
+
+        // If Defense is true, map to DEF versions
+        if (isDefense) {
+            const defMap = {
+                'OPEN': ['DEFOPENS'],
+                'OBC': ['DEFOBCS', 'DEFROBCS'],
+                'SC': ['DEFSCS', 'DEFRSCS'],
+                'ST': ['DEFSTS', 'DEFRSTS'],
+                'NT1': ['DEFRNT1S'],
+                'NT2': ['DEFRNT2S'],
+                'NT3': ['DEFRNT3S'],
+                'DT_VJ': ['DEFRVJS'],
+                'SBC': ['DEFRSBCS'],
+                'EWS': ['DEFEWS'],
+                'SEBC': ['DEFRSEBC']
+            };
+            keys.push(...(defMap[lookup] || [`DEF${lookup}S`]));
+        }
+
+        // Add TFWS if applicable (form checkbox OR category dropdown)
+        if (isTfws || lookup === 'TFWS') keys.push('TFWS');
+
+        // Add ORPHAN if applicable (form checkbox OR category dropdown)
+        if (isOrphan || lookup === 'ORPHAN') keys.push('ORPHAN');
+
+        // Add standard category keys to the list so users can see all seats they are eligible for
         const catMap = {
             'OPEN': ['GOPENS'],
             'OBC': ['GOBCS'],
@@ -21,22 +70,21 @@ class PredictionService {
             'EWS': ['EWS']
         };
 
-        const lookup = String(category).toUpperCase().trim();
-        
-        // Exact rule from the prompt: NT -> [GNT1S, GNT2S, GNT3S]
         if (lookup === 'NT') {
-            return ['GNT1S', 'GNT2S', 'GNT3S'];
+            keys.push('GNT1S', 'GNT2S', 'GNT3S');
+        } else {
+            keys.push(...(catMap[lookup] || [lookup]));
         }
 
-        return catMap[lookup] || [lookup];
+        return [...new Set(keys)];
     }
 
     /**
      * Process list of all colleges and filter based on explicit rules.
      */
-    static processPredictions(allColleges, args, ignoreCity = false) {
-        const { percentile, category, branches = [], cities = [], collegeTypes = [], gender, examType } = args;
-        const targetKeys = this.getCategoryKeys(category);
+    static processPredictions(allColleges, args, ignoreDistrict = false) {
+        const { percentile, category, branches = [], districts = [], collegeTypes = [], gender, examType, isPwd, isDefense, isTfws, isOrphan } = args;
+        const targetKeys = this.getCategoryKeys(category, isPwd, isDefense, isTfws, isOrphan);
         
         const results = [];
 
@@ -46,11 +94,11 @@ class PredictionService {
             // Extract standard fields defensively
             const collegeName = String(college.collegeName || college.college_name || '');
             
-            // Extract and clean city from location
+            // Extract and clean district from location
             const loc = college.location;
             const parsedLoc = (loc && typeof loc === 'object') ? (loc.city || loc.district) : loc;
             const fallbackStr = collegeName.split(',').pop()?.trim() || 'Maharashtra';
-            const collegeCity = String(parsedLoc || college.district || college.city || fallbackStr);
+            const collegeDistrict = String(parsedLoc || college.district || college.city || fallbackStr);
 
             // Extract Type — check multiple possible field names
             let collegeTypeObj = college.type || college.college_type || college.status || null;
@@ -67,10 +115,10 @@ class PredictionService {
                 }
             }
 
-            // --- STEP 2: CITY FILTER (CONDITIONAL) ---
-            if (!ignoreCity && Array.isArray(cities) && cities.length > 0 && !cities.includes("No Preference") && !cities.includes("Any")) {
-                const inCity = cities.some(c => collegeCity.toLowerCase().includes(String(c).toLowerCase()));
-                if (!inCity) continue; // Skip if it doesn't match any of the selected cities
+            // --- STEP 2: DISTRICT FILTER (CONDITIONAL) ---
+            if (!ignoreDistrict && Array.isArray(districts) && districts.length > 0) {
+                const inDistrict = districts.some(d => collegeDistrict.toLowerCase().includes(String(d).toLowerCase()));
+                if (!inDistrict) continue; // Skip if it doesn't match any selected districts
             }
 
             // --- STEP 3: COLLEGE TYPE FILTER ---
@@ -81,16 +129,25 @@ class PredictionService {
 
             // --- STEP 3.5: GENDER FILTER ---
             if (gender) {
-                const collegeGender = college.college_gender || "Co-ed";
-                // If student is Male, exclude "Female Only" colleges
+                let collegeGender = college.college_gender || "Co-ed";
+                
+                // FALLBACK: If explicit field is missing, check the college name
+                if (!college.college_gender) {
+                    const nameLower = collegeName.toLowerCase();
+                    if (nameLower.includes("women") || nameLower.includes("girls") || nameLower.includes("ladies")) {
+                        collegeGender = "Female Only";
+                    } else if (nameLower.includes("boys") || nameLower.includes("mens")) {
+                        collegeGender = "Male Only";
+                    }
+                }
+
+                // Apply exclusion rules
                 if (gender === "Male" && collegeGender === "Female Only") {
                     continue;
                 }
-                // If student is Female, exclude "Male Only" colleges
                 if (gender === "Female" && collegeGender === "Male Only") {
                     continue;
                 }
-                // Co-ed is always allowed
             }
 
             // --- STEP 4: BRANCH FILTER ---
@@ -104,7 +161,23 @@ class PredictionService {
                 if (!Array.isArray(branches) || branches.length === 0 || branches.includes("Any")) {
                     matchesBranch = true;
                 } else {
-                    matchesBranch = branches.some(b => courseName.toLowerCase().includes(String(b).toLowerCase()));
+                    matchesBranch = branches.some(b => {
+                        const searchTerm = String(b).toLowerCase();
+                        const target = courseName.toLowerCase();
+                        
+                        // Standard contains check
+                        if (target.includes(searchTerm)) return true;
+                        
+                        // Smart Aliases
+                        if (searchTerm.includes("artificial intelligence") && (target.includes(" ai ") || target.endsWith(" ai") || target.includes("(ai)"))) return true;
+                        if (searchTerm === "ai" && target.includes("artificial intelligence")) return true;
+                        if (searchTerm.includes("machine learning") && target.includes(" ml")) return true;
+                        if (searchTerm === "ml" && target.includes("machine learning")) return true;
+                        if (searchTerm === "computer science" && target.includes("computer engineering")) return true;
+                        if (searchTerm === "computer engineering" && target.includes("computer science")) return true;
+                        
+                        return false;
+                    });
                 }
 
                 if (!matchesBranch) continue; // Skip if branch doesn't match
@@ -147,7 +220,7 @@ class PredictionService {
                     results.push({
                         id: college._id ? String(college._id) : Math.random().toString(),
                         collegeName: collegeName,
-                        city: collegeCity,
+                        city: collegeDistrict,
                         branch: courseName,
                         cutoff: actualCutoff,
                         collegeType: String(collegeTypeObj),
@@ -163,20 +236,20 @@ class PredictionService {
         return results;
     }
 
-    static async predictColleges(percentile, category, branches = [], cities = [], collegeTypes = [], gender, examType) {
+    static async predictColleges(percentile, category, branches = [], districts = [], collegeTypes = [], gender, isPwd, isDefense, isTfws, isOrphan, examType) {
         try {
             // STEP 1: FETCH DATA
             // Fetch all colleges from MongoDB using lean() for performance
             const allColleges = await MahacetCutoff.find({}).lean();
             
-            const args = { percentile, category, branches, cities, collegeTypes, gender, examType };
+            const args = { percentile, category, branches, districts, collegeTypes, gender, isPwd, isDefense, isTfws, isOrphan, examType };
 
             // Run strict filtering
             let results = this.processPredictions(allColleges, args, false);
 
             // --- STEP 9: FALLBACK LOGIC ---
-            // IF no results found: Remove city filter, Retry prediction
-            if (results.length === 0 && Array.isArray(cities) && cities.length > 0 && !cities.includes("No Preference") && !cities.includes("Any")) {
+            // IF no results found: Remove district filter, Retry prediction
+            if (results.length === 0 && Array.isArray(districts) && districts.length > 0) {
                 results = this.processPredictions(allColleges, args, true);
             }
 
@@ -195,8 +268,8 @@ class PredictionService {
             results = Array.from(uniqueMap.values());
 
             // --- STEP 11: LIMIT RESULTS ---
-            // Return top 20 colleges
-            return results.slice(0, 20);
+            // Return top 50 colleges
+            return results.slice(0, 50);
             
         } catch (error) {
             console.error('PredictionService error:', error);

@@ -1,6 +1,6 @@
 const MahacetCutoff = require('../../database/models/MahacetCutoff');
 const SUPPORTED_CATEGORIES = [
-    'OPEN', 'EWS', 'OBC', 'DT_VJ', 'NT1', 'NT2', 'NT3', 'SBC', 'SEBC', 'SC', 'ST'
+    'OPEN', 'EWS', 'OBC', 'DT_VJ', 'NT1', 'NT2', 'NT3', 'SBC', 'SEBC', 'SC', 'ST', 'TFWS', 'ORPHAN'
 ];
 
 /**
@@ -21,6 +21,8 @@ const getCategories = async (req, res) => {
             SEBC: 'SEBC',
             SC: 'SC',
             ST: 'ST',
+            TFWS: 'TFWS (Fee Waiver)',
+            ORPHAN: 'Orphan Candidate',
         };
 
         const categories = SUPPORTED_CATEGORIES.map((key) => ({
@@ -68,51 +70,29 @@ const getBranches = async (req, res) => {
 const getCities = async (req, res) => {
     try {
         // First try to use an explicit location / district / city field
-        let results = await MahacetCutoff.aggregate([
+        const results = await MahacetCutoff.aggregate([
             {
                 $project: {
-                    city: {
-                        $ifNull: [
-                            '$location',
-                            {
-                                $ifNull: [
-                                    '$district',
-                                    {
-                                        $ifNull: [
-                                            '$city',
-                                            {
-                                                // Fallback: extract after last comma in college_name
-                                                $trim: {
-                                                    input: {
-                                                        $arrayElemAt: [
-                                                            { $split: [{ $ifNull: ['$college_name', ''] }, ','] },
-                                                            -1,
-                                                        ],
-                                                    },
-                                                },
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                },
+                    raw: { $ifNull: ['$district', { $ifNull: ['$city', '$location'] }] }
+                }
             },
-            { $match: { city: { $ne: '' } } },
-            { $group: { _id: '$city' } },
+            {
+                $project: {
+                    str: {
+                        $cond: {
+                            if: { $eq: [{ $type: '$raw' }, 'object'] },
+                            then: { $ifNull: ['$raw.district', { $ifNull: ['$raw.city', 'Unknown'] }] },
+                            else: { $ifNull: [{ $toString: '$raw' }, 'Unknown'] }
+                        }
+                    }
+                }
+            },
+            { $group: { _id: { $trim: { input: '$str' } } } },
+            { $match: { _id: { $ne: '', $nin: [null, 'Unknown', 'undefined', '[object Object]'] } } },
             { $sort: { _id: 1 } },
         ]);
 
-        const cities = results
-            .map((r) => {
-                const c = r._id;
-                if (c && typeof c === 'object') {
-                    return c.city || c.district || c.region || '';
-                }
-                return c;
-            })
-            .filter((v) => typeof v === 'string' && v.trim().length > 0);
+        const cities = results.map((r) => r._id);
 
         // Deduplicate after possible mapping overlaps
         const uniqueCities = [...new Set(cities)];
@@ -129,3 +109,4 @@ module.exports = {
     getBranches,
     getCities,
 };
+

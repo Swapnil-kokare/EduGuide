@@ -8,9 +8,12 @@ interface ExportParams {
   percentile: string;
   category: string;
   results: CollegeResult[];
+  isPwd: boolean;
+  isDefense: boolean;
+  gender: string;
 }
 
-export function exportResultsPdf({ name, examType, percentile, category, results }: ExportParams) {
+export function exportResultsPdf({ name, examType, percentile, category, results, isPwd, isDefense, gender }: ExportParams) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -35,9 +38,12 @@ export function exportResultsPdf({ name, examType, percentile, category, results
   doc.setFont("helvetica", "normal");
   const info = [
     ["Name", name],
+    ["Gender", gender],
     ["Exam Type", examType],
     ["Percentile", `${percentile}%`],
     ["Category", category],
+    ["PWD Status", isPwd ? "Yes" : "No"],
+    ["Defense Child", isDefense ? "Yes" : "No"],
     ["Total Matches", String(results.length)],
     ["Good Matches (75%+)", String(results.filter((r) => r.matchPercent >= 75).length)],
   ];

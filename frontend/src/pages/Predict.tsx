@@ -31,11 +31,12 @@ import {
 import type { CategoryOption } from "@/lib/prediction";
 
 const STEPS = [
-  { label: "Personal Info", icon: User, desc: "Your basic details" },
-  { label: "Your Score", icon: BookOpen, desc: "Exam performance" },
-  { label: "Preferences", icon: Settings2, desc: "Branch & location" },
+  { label: "Basic Info", icon: User, desc: "Name & Gender" },
+  { label: "Reservations", icon: GraduationCap, desc: "Caste & Special Quotas" },
+  { label: "Academic Info", icon: BookOpen, desc: "Exam performance" },
+  { label: "Preferences", icon: MapPin, desc: "Branch & District" },
 ];
-const MAX_PREDICTION_RESULTS = 20;
+const MAX_PREDICTION_RESULTS = 50;
 
 /* ─── Inline error component ─── */
 const FieldError = ({ message }: { message?: string }) => {
@@ -62,13 +63,18 @@ const Predict = () => {
   // Form state
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
-  const [category, setCategory] = useState("");
+  const [isPwd, setIsPwd] = useState(false);
+  const [isDefense, setIsDefense] = useState(false);
+  const [isTfws, setIsTfws] = useState(false);
+  const [isOrphan, setIsOrphan] = useState(false);
+  const [category, setCategory] = useState("OPEN");
   const [examType, setExamType] = useState<"MHT-CET" | "JEE">("MHT-CET");
   const [score, setScore] = useState("");
   const [percentile, setPercentile] = useState("");
   const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
-  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
   const [collegeType, setCollegeType] = useState("Any");
+  const [districtSearch, setDistrictSearch] = useState("");
 
   // Dynamic data from backend
   const [dynamicCategories, setDynamicCategories] = useState<CategoryOption[]>([]);
@@ -107,10 +113,17 @@ const Predict = () => {
     (dynamicBranches.length > 0 ? dynamicBranches : fallbackBranches)
       .filter((b): b is string => typeof b === "string" && b.trim().length > 0)
   ));
-  const citiesList = Array.from(new Set(
-    (dynamicCities.length > 0 ? dynamicCities : fallbackLocations.filter(l => l !== "Any"))
-      .filter((c): c is string => typeof c === "string" && c.trim().length > 0)
-  )).sort((a, b) => a.localeCompare(b));
+  const districtsList = [
+    "Pune", "Nagpur", "Thane", "Nashik", "Mumbai", "Kolhapur", "Solapur", "Raigad",
+    "Ahilyanagar", "Chhatrapati Sambhajinagar", "Jalgaon", "Amravati", "Beed", "Satara",
+    "Sangli", "Nanded", "Dhule", "Latur", "Ratnagiri", "Buldhana", "Palghar", "Wardha",
+    "Chandrapur", "Yavatmal", "Dharashiv", "Nandurbar", "Akola", "Jalna", "Sindhudurg",
+    "Bhandara", "Washim", "Parbhani"
+  ].sort((a, b) => a.localeCompare(b));
+
+  const filteredDistricts = districtsList.filter(d => 
+    d.toLowerCase().includes(districtSearch.toLowerCase())
+  );
 
   const selectedCategoryOption = categoriesList.find((item) => item.apiValue === category) ?? null;
 
@@ -158,13 +171,14 @@ const Predict = () => {
   };
 
   const canNext = () => {
-    if (step === 0) return name.trim().length > 0 && category.length > 0 && gender.length > 0;
-    if (step === 1) {
+    if (step === 0) return name.trim().length > 0 && gender.length > 0;
+    if (step === 1) return category.length > 0;
+    if (step === 2) {
       const scoreErr = validateScore(score);
       const pctErr = validatePercentile(percentile);
       return !scoreErr && !pctErr && percentile.length > 0;
     }
-    if (step === 2) return selectedBranches.length > 0;
+    if (step === 3) return selectedBranches.length > 0;
     return false;
   };
 
@@ -174,17 +188,20 @@ const Predict = () => {
     if (step === 0) {
       if (!name.trim()) newErrors.name = "Name is required";
       if (!gender) newErrors.gender = "Please select your gender";
-      if (!category) newErrors.category = "Please select a category";
     }
 
     if (step === 1) {
+      if (!category) newErrors.category = "Please select a category";
+    }
+
+    if (step === 2) {
       const scoreErr = validateScore(score);
       if (scoreErr) newErrors.score = scoreErr;
       const pctErr = validatePercentile(percentile);
       if (pctErr) newErrors.percentile = pctErr;
     }
 
-    if (step === 2) {
+    if (step === 3) {
       if (selectedBranches.length === 0) newErrors.branches = "Select at least one branch";
     }
 
@@ -222,10 +239,14 @@ const Predict = () => {
         percentile: finalScore,
         category: selectedCategoryOption.apiValue,
         branches: selectedBranches,
-        cities: selectedCities,
+        districts: selectedDistricts,
         collegeTypes: collegeType === "Any" ? [] : [collegeType],
         examType,
         gender,
+        isPwd,
+        isDefense,
+        isTfws,
+        isOrphan,
       });
 
       if (!response.success) {
@@ -279,12 +300,16 @@ const Predict = () => {
     setSuccess(false);
     setName("");
     setGender("");
-    setCategory("");
+    setIsPwd(false);
+    setIsDefense(false);
+    setIsTfws(false);
+    setIsOrphan(false);
+    setCategory("OPEN");
     setExamType("MHT-CET");
     setScore("");
     setPercentile("");
     setSelectedBranches([]);
-    setSelectedCities([]);
+    setSelectedDistricts([]);
     setCollegeType("Any");
     setErrors({});
   };
@@ -296,9 +321,13 @@ const Predict = () => {
     clearFieldError("branches");
   };
 
-  const toggleCity = (city: string) => {
-    setSelectedCities((prev) =>
-      prev.includes(city) ? prev.filter((c) => c !== city) : [...prev, city]
+  const toggleDistrict = (district: string) => {
+    if (district === "No Preference") {
+      setSelectedDistricts([]);
+      return;
+    }
+    setSelectedDistricts((prev) =>
+      prev.includes(district) ? prev.filter((d) => d !== district) : [...prev, district]
     );
   };
 
@@ -439,13 +468,22 @@ const Predict = () => {
             <div>
               <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">Your Results</h1>
               <p className="text-muted-foreground mt-1">
-                Hi {name}, here are the <span className="text-foreground font-semibold">top {results.length} colleges</span> matching your {examType} profile ({percentile} percentile, {selectedCategoryOption?.label ?? category} category).
+                Hi {name}, here are the <span className="text-foreground font-semibold">top {results.length} colleges</span> matching your {examType} profile ({percentile} percentile, {selectedCategoryOption?.label ?? category} category{isPwd ? ", PWD" : ""}{isDefense ? ", Defense" : ""}).
               </p>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => exportResultsPdf({ name, examType, percentile, category, results })}
+                onClick={() => exportResultsPdf({ 
+                  name, 
+                  examType, 
+                  percentile, 
+                  category: selectedCategoryOption?.label || category, 
+                  results, 
+                  isPwd, 
+                  isDefense, 
+                  gender 
+                })}
                 className="gap-2 rounded-xl"
               >
                 <Download className="h-4 w-4" /> Export PDF
@@ -586,9 +624,10 @@ const Predict = () => {
                 {STEPS[step].label}
               </CardTitle>
               <CardDescription>
-                {step === 0 && "Let's start with your basic information."}
-                {step === 1 && "Enter your exam score and percentile accurately for best results."}
-                {step === 2 && "Select your preferences — you can choose multiple branches and cities."}
+                {step === 0 && "Tell us who you are."}
+                {step === 1 && "Select your category and any special reservations you have."}
+                {step === 2 && "Enter your exam score and percentile accurately for best results."}
+                {step === 3 && "Select your preferences — you can choose multiple branches and districts."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -601,7 +640,7 @@ const Predict = () => {
                   transition={{ duration: 0.2 }}
                   className="space-y-5"
                 >
-                  {/* ─── STEP 0: Personal Info ─── */}
+                  {/* ─── STEP 0: Basic Info ─── */}
                   {step === 0 && (
                     <>
                       <div className="space-y-1.5">
@@ -632,7 +671,12 @@ const Predict = () => {
                         </Select>
                         <FieldError message={errors.gender} />
                       </div>
+                    </>
+                  )}
 
+                  {/* ─── STEP 1: Reservations ─── */}
+                  {step === 1 && (
+                    <>
                       <div className="space-y-1.5">
                         <Label>Category (Caste)</Label>
                         {metaLoading ? (
@@ -657,11 +701,46 @@ const Predict = () => {
                         <FieldError message={errors.category} />
                         <p className="text-xs text-muted-foreground">Reservation categories follow the CET Cell category set used for CAP cutoffs.</p>
                       </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label>PWD (Physical Disability)</Label>
+                          <Select
+                            value={isPwd ? "Yes" : "No"}
+                            onValueChange={(val) => setIsPwd(val === "Yes")}
+                          >
+                            <SelectTrigger className="rounded-xl h-11">
+                              <SelectValue placeholder="PWD?" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="No">No</SelectItem>
+                              <SelectItem value="Yes">Yes</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label>Defense Personnel Child</Label>
+                          <Select
+                            value={isDefense ? "Yes" : "No"}
+                            onValueChange={(val) => setIsDefense(val === "Yes")}
+                          >
+                            <SelectTrigger className="rounded-xl h-11">
+                              <SelectValue placeholder="Defense?" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="No">No</SelectItem>
+                              <SelectItem value="Yes">Yes</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
                     </>
                   )}
 
-                  {/* ─── STEP 1: Score ─── */}
-                  {step === 1 && (
+                  {/* ─── STEP 2: Score ─── */}
+                  {step === 2 && (
                     <>
                       <div className="space-y-1.5">
                         <Label>Exam Type</Label>
@@ -680,9 +759,6 @@ const Predict = () => {
                             </button>
                           ))}
                         </div>
-                        {examType === "JEE" && (
-                          <p className="text-xs text-info">JEE percentile will be automatically converted to MHT-CET equivalent for matching.</p>
-                        )}
                       </div>
 
                       <div className="space-y-1.5">
@@ -716,8 +792,8 @@ const Predict = () => {
                     </>
                   )}
 
-                  {/* ─── STEP 2: Preferences ─── */}
-                  {step === 2 && (
+                  {/* ─── STEP 3: Preferences ─── */}
+                  {step === 3 && (
                     <>
                       {/* ── Branch multi-select ── */}
                       <div className="space-y-2">
@@ -772,52 +848,92 @@ const Predict = () => {
                       {/* ── Divider ── */}
                       <div className="border-t border-border my-2" />
 
-                      {/* ── City / District multi-select ── */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-primary" />
-                          <Label className="text-base font-semibold">Preferred City / District</Label>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Select one or more cities. Leave empty for no preference (all cities).</p>
-                        {metaLoading ? (
-                          <div className="space-y-2">
-                            {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full rounded-xl" />)}
+                      {/* ── District multi-select ── */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-primary" />
+                            <Label className="text-base font-semibold">Preferred Districts</Label>
                           </div>
-                        ) : (
-                          <div className="grid grid-cols-1 gap-2 max-h-[240px] overflow-y-auto pr-1 border rounded-xl p-2">
-                            {citiesList.map((city) => (
+                          {selectedDistricts.length > 0 && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setSelectedDistricts([])}
+                              className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                            >
+                              Clear all
+                            </Button>
+                          )}
+                        </div>
+                        
+                        <div className="relative group">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <Input
+                            placeholder="Search districts..."
+                            value={districtSearch}
+                            onChange={(e) => setDistrictSearch(e.target.value)}
+                            className="rounded-xl pl-9 h-11 border-border/50 bg-muted/20 focus:bg-background transition-all"
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleDistrict("No Preference")}
+                            className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${selectedDistricts.length === 0
+                              ? "border-primary/40 bg-primary/5 text-primary shadow-sm"
+                              : "border-border hover:bg-muted/50 text-muted-foreground"
+                            }`}
+                          >
+                            No Preference
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1 border border-border/50 rounded-xl p-3 bg-muted/10">
+                          {filteredDistricts.length > 0 ? (
+                            filteredDistricts.map((district) => (
                               <label
-                                key={city}
-                                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${selectedCities.includes(city)
-                                  ? "border-primary/40 bg-primary/5"
-                                  : "border-border hover:bg-muted/50"
-                                  }`}
+                                key={district}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] ${selectedDistricts.includes(district)
+                                  ? "border-primary/40 bg-primary/5 text-primary"
+                                  : "border-transparent bg-background/50 hover:bg-background"
+                                }`}
                               >
                                 <Checkbox
-                                  checked={selectedCities.includes(city)}
-                                  onCheckedChange={() => toggleCity(city)}
+                                  checked={selectedDistricts.includes(district)}
+                                  onCheckedChange={() => toggleDistrict(district)}
+                                  className="rounded-[4px]"
                                 />
-                                <span className="text-sm font-medium">{city}</span>
+                                <span className="text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis">{district}</span>
                               </label>
-                            ))}
-                          </div>
-                        )}
-                        {selectedCities.length > 0 && (
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground font-medium">Selected ({selectedCities.length}):</p>
+                            ))
+                          ) : (
+                            <div className="col-span-full py-8 text-center text-sm text-muted-foreground italic">
+                              No districts matching "{districtSearch}"
+                            </div>
+                          )}
+                        </div>
+
+                        {selectedDistricts.length > 0 && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }} 
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-2 pt-1"
+                          >
                             <div className="flex flex-wrap gap-1.5">
-                              {selectedCities.map((c) => (
+                              {selectedDistricts.sort().map((d) => (
                                 <Badge
-                                  key={c}
+                                  key={d}
                                   variant="secondary"
-                                  className="gap-1 cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors rounded-lg text-xs"
-                                  onClick={() => toggleCity(c)}
+                                  className="gap-1.5 cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors rounded-lg py-1 px-2.5 border-primary/10 shadow-sm"
+                                  onClick={() => toggleDistrict(d)}
                                 >
-                                  <MapPin className="h-3 w-3" /> {c} ✕
+                                  {d} <span className="text-muted-foreground">✕</span>
                                 </Badge>
                               ))}
                             </div>
-                          </div>
+                          </motion.div>
                         )}
                       </div>
 
@@ -850,7 +966,7 @@ const Predict = () => {
                 >
                   <ArrowLeft className="h-4 w-4" /> Back
                 </Button>
-                {step < 2 ? (
+                {step < STEPS.length - 1 ? (
                   <Button onClick={goNext} disabled={!canNext()} className="gap-2 rounded-xl">
                     Next <ArrowRight className="h-4 w-4" />
                   </Button>

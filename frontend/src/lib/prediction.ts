@@ -293,6 +293,8 @@ export const categories: CategoryOption[] = [
   { label: "SEBC", apiValue: "SEBC" },
   { label: "SC", apiValue: "SC" },
   { label: "ST", apiValue: "ST" },
+  { label: "TFWS", apiValue: "TFWS" },
+  { label: "Orphan", apiValue: "ORPHAN" },
 ];
 
 export const examTypes = ["MHT-CET", "JEE"] as const;
