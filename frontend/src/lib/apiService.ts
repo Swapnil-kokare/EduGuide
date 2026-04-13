@@ -7,6 +7,7 @@ export interface PredictionRequest {
     cities: string[];
     collegeTypes: string[];
     examType?: "MHT-CET" | "JEE";
+    gender?: string;
 }
 
 export interface PredictionResponse {

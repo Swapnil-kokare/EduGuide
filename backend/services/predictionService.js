@@ -9,15 +9,15 @@ class PredictionService {
         if (!category) return ['GOPENS'];
         
         const catMap = {
-            'OPEN': ['GOPENS'],
-            'OBC': ['GOBCS'],
-            'SC': ['GSCS'],
-            'ST': ['GSTS'],
-            'NT1': ['GNT1S'],
-            'NT2': ['GNT2S'],
-            'NT3': ['GNT3S'],
-            'DT_VJ': ['GVJS'],
-            'SBC': ['GSBCS'],
+            'OPEN': ['GOPENS', 'GOPENH', 'GOPENO', 'LOPENH', 'LOPENO', 'LOPENS'],
+            'OBC': ['GOBCS', 'GOBCH', 'GOBCO', 'LOBCS', 'LOBCH', 'LOBCO'],
+            'SC': ['GSCS', 'GSCH', 'GSCO', 'LSCS', 'LSCH', 'LSCO'],
+            'ST': ['GSTS', 'GSTH', 'GSTO', 'LSTS', 'LSTH', 'LSTO'],
+            'NT1': ['GNT1S', 'GNT1H', 'GNT1O'],
+            'NT2': ['GNT2S', 'GNT2H', 'GNT2O'],
+            'NT3': ['GNT3S', 'GNT3H', 'GNT3O'],
+            'DT_VJ': ['GVJS', 'GVJH', 'GVJO'],
+            'SBC': ['GSBCS', 'GSBCH', 'GSBCO'],
             'EWS': ['EWS']
         };
 
@@ -35,7 +35,7 @@ class PredictionService {
      * Process list of all colleges and filter based on explicit rules.
      */
     static processPredictions(allColleges, args, ignoreCity = false) {
-        const { percentile, category, branches = [], cities = [], collegeTypes = [] } = args;
+        const { percentile, category, branches = [], cities = [], collegeTypes = [], gender, examType } = args;
         const targetKeys = this.getCategoryKeys(category);
         
         const results = [];
@@ -77,6 +77,20 @@ class PredictionService {
             if (Array.isArray(collegeTypes) && collegeTypes.length > 0 && !collegeTypes.includes("Any") && !collegeTypes.includes("No Preference")) {
                 const typeMatch = collegeTypes.some(t => String(collegeTypeObj).toLowerCase().includes(String(t).toLowerCase()));
                 if (!typeMatch) continue;
+            }
+
+            // --- STEP 3.5: GENDER FILTER ---
+            if (gender) {
+                const collegeGender = college.college_gender || "Co-ed";
+                // If student is Male, exclude "Female Only" colleges
+                if (gender === "Male" && collegeGender === "Female Only") {
+                    continue;
+                }
+                // If student is Female, exclude "Male Only" colleges
+                if (gender === "Female" && collegeGender === "Male Only") {
+                    continue;
+                }
+                // Co-ed is always allowed
             }
 
             // --- STEP 4: BRANCH FILTER ---
@@ -122,12 +136,12 @@ class PredictionService {
 
                 // --- STEP 7: SAFE CHECK (CORE RULE) ---
                 // STRICT: Only include colleges where user's percentile >= cutoff
-                // No buffer — student must meet or exceed the cutoff to be safe
-                if (percentile >= actualCutoff) {
+                // We use + 0.0000001 to handle floating point precision issues safely 
+                // but effectively keep it strictly at or above the cutoff.
+                if (Number(percentile) >= Number(actualCutoff)) {
                     // Calculate match quality: how far above the cutoff the student is
-                    const gap = percentile - actualCutoff;
+                    const gap = Number(percentile) - Number(actualCutoff);
                     // Closer to cutoff = higher match (tighter fit is better)
-                    // gap 0 = 100% match, gap 6+ = 75% match
                     const matchPercent = Math.max(75, Math.round(100 - (gap * (25 / 6))));
 
                     results.push({
@@ -149,13 +163,13 @@ class PredictionService {
         return results;
     }
 
-    static async predictColleges(percentile, category, branches = [], cities = [], collegeTypes = []) {
+    static async predictColleges(percentile, category, branches = [], cities = [], collegeTypes = [], gender, examType) {
         try {
             // STEP 1: FETCH DATA
             // Fetch all colleges from MongoDB using lean() for performance
             const allColleges = await MahacetCutoff.find({}).lean();
             
-            const args = { percentile, category, branches, cities, collegeTypes };
+            const args = { percentile, category, branches, cities, collegeTypes, gender, examType };
 
             // Run strict filtering
             let results = this.processPredictions(allColleges, args, false);

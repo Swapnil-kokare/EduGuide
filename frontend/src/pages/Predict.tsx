@@ -61,6 +61,7 @@ const Predict = () => {
 
   // Form state
   const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
   const [category, setCategory] = useState("");
   const [examType, setExamType] = useState<"MHT-CET" | "JEE">("MHT-CET");
   const [score, setScore] = useState("");
@@ -157,7 +158,7 @@ const Predict = () => {
   };
 
   const canNext = () => {
-    if (step === 0) return name.trim().length > 0 && category.length > 0;
+    if (step === 0) return name.trim().length > 0 && category.length > 0 && gender.length > 0;
     if (step === 1) {
       const scoreErr = validateScore(score);
       const pctErr = validatePercentile(percentile);
@@ -172,6 +173,7 @@ const Predict = () => {
 
     if (step === 0) {
       if (!name.trim()) newErrors.name = "Name is required";
+      if (!gender) newErrors.gender = "Please select your gender";
       if (!category) newErrors.category = "Please select a category";
     }
 
@@ -223,6 +225,7 @@ const Predict = () => {
         cities: selectedCities,
         collegeTypes: collegeType === "Any" ? [] : [collegeType],
         examType,
+        gender,
       });
 
       if (!response.success) {
@@ -275,6 +278,7 @@ const Predict = () => {
     setError(null);
     setSuccess(false);
     setName("");
+    setGender("");
     setCategory("");
     setExamType("MHT-CET");
     setScore("");
@@ -610,6 +614,23 @@ const Predict = () => {
                           className={`rounded-xl h-11 ${errors.name ? "border-destructive focus-visible:ring-destructive" : ""}`}
                         />
                         <FieldError message={errors.name} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Gender</Label>
+                        <Select
+                          value={gender}
+                          onValueChange={(val) => { setGender(val); clearFieldError("gender"); }}
+                        >
+                          <SelectTrigger className={`rounded-xl h-11 ${errors.gender ? "border-destructive focus-visible:ring-destructive" : ""}`}>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FieldError message={errors.gender} />
                       </div>
 
                       <div className="space-y-1.5">

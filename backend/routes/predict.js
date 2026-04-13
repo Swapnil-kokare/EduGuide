@@ -27,7 +27,11 @@ router.post('/',
         body('examType')
             .optional()
             .isIn(['MHT-CET', 'JEE'])
-            .withMessage('Exam type must be MHT-CET or JEE')
+            .withMessage('Exam type must be MHT-CET or JEE'),
+        body('gender')
+            .optional()
+            .isIn(['Male', 'Female'])
+            .withMessage('Gender must be Male or Female')
     ],
     predictColleges
 );
