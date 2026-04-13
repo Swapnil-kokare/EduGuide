@@ -9,15 +9,15 @@ class PredictionService {
         if (!category) return ['GOPENS'];
         
         const catMap = {
-            'OPEN': ['GOPENS', 'GOPENH', 'GOPENO', 'LOPENH', 'LOPENO', 'LOPENS'],
-            'OBC': ['GOBCS', 'GOBCH', 'GOBCO', 'LOBCS', 'LOBCH', 'LOBCO'],
-            'SC': ['GSCS', 'GSCH', 'GSCO', 'LSCS', 'LSCH', 'LSCO'],
-            'ST': ['GSTS', 'GSTH', 'GSTO', 'LSTS', 'LSTH', 'LSTO'],
-            'NT1': ['GNT1S', 'GNT1H', 'GNT1O'],
-            'NT2': ['GNT2S', 'GNT2H', 'GNT2O'],
-            'NT3': ['GNT3S', 'GNT3H', 'GNT3O'],
-            'DT_VJ': ['GVJS', 'GVJH', 'GVJO'],
-            'SBC': ['GSBCS', 'GSBCH', 'GSBCO'],
+            'OPEN': ['GOPENS'],
+            'OBC': ['GOBCS'],
+            'SC': ['GSCS'],
+            'ST': ['GSTS'],
+            'NT1': ['GNT1S'],
+            'NT2': ['GNT2S'],
+            'NT3': ['GNT3S'],
+            'DT_VJ': ['GVJS'],
+            'SBC': ['GSBCS'],
             'EWS': ['EWS']
         };
 
